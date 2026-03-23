@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Выживальщик Tap</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { margin:0; padding:0; background:#0a0a0a; color:#fff; font-family:Arial; text-align:center; overflow:hidden; }
         #app { max-width:500px; margin:0 auto; }
@@ -16,7 +15,13 @@
         .tab.active { background:#aaaaaa; color:#000; }
         .info-tab { background:#333; color:#aaa; cursor:default; }
         #survivalPoints { font-size:54px; font-weight:bold; color:#ffd700; margin:5px 0 4px; text-shadow:0 0 25px #ffd700; }
-        #tapArea { width:290px; height:290px; margin:10px auto 25px; background: linear-gradient(to bottom, #ffffff 0% 33.3%, #0039a6 33.3% 66.6%, #da291c 66.6% 100%); border-radius:50%; font-size:125px; line-height:290px; cursor:pointer; box-shadow:0 0 0 4px #000, 0 0 70px #da291c; transition:transform 0.08s; position:relative; overflow:hidden; }
+        #tapArea { 
+            width:290px; height:290px; margin:10px auto 25px; 
+            background: linear-gradient(to bottom, #ffffff 0% 33.3%, #0039a6 33.3% 66.6%, #da291c 66.6% 100%);
+            border-radius:50%; font-size:125px; line-height:290px; cursor:pointer; 
+            box-shadow:0 0 0 4px #000, 0 0 70px #da291c; 
+            transition:transform 0.08s; position:relative; overflow:hidden; 
+        }
         #tapArea:active { transform:scale(0.72) rotate(-5deg); }
         .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 8px #ffd700,0 0 20px #ffd700,0 0 35px #ffaa00; pointer-events:none; animation:floatUp 1.35s forwards; }
         @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6) rotate(-8deg)} 15%{opacity:1;transform:translateY(0) scale(1.35) rotate(3deg)} 40%{transform:translateY(-40px) scale(1.1) rotate(-2deg)} 100%{opacity:0;transform:translateY(-170px) scale(0.85) rotate(6deg)} }
@@ -31,7 +36,9 @@
 </head>
 <body>
     <div id="app">
-        <div class="header"><h1>🐻 Выживальщик Tap</h1></div>
+        <div class="header">
+            <h1>🐻 Выживальщик Tap</h1>
+        </div>
 
         <div class="tab-bar">
             <button class="tab active" onclick="switchTab(0)">🛡️ Спасение</button>
@@ -42,6 +49,7 @@
         </div>
 
         <div id="survivalPoints">0</div>
+
         <div id="tapArea">🐻</div>
 
         <div id="tab0" class="content active">
@@ -70,10 +78,6 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://vdkauiyeunpfiljzifiz.supabase.co';
-        const supabaseKey = 'sb_publishable_ZtBu_dIdYcwxBoLkY4txKw_iscTcIzq';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
         let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
@@ -130,6 +134,7 @@
             document.getElementById('tab'+n).classList.add('active');
         }
 
+        // === ПРОКСИ ЗАХАРДКОЖЕНЫ (без Supabase) ===
         async function showTabContent(n) {
             if (n !== 1) {
                 const names = ["", "Алёрты", "Бэкап"];
@@ -142,19 +147,16 @@
                 return;
             }
 
-            const { data, error } = await supabase.from('proxies').select('*').eq('is_active', true).order('added_at', { ascending: false });
-            if (error) {
-                console.error('Ошибка Supabase:', error);
-                alert("Ошибка загрузки прокси. Попробуй позже!");
-                return;
-            }
-            if (!data || data.length === 0) {
-                alert("Пока нет рабочих прокси. Тапай дальше или жди обновления!");
-                return;
-            }
+            const proxies = [
+                {type: "MTProto", server: "195.2.78.126", port: 443},
+                {type: "MTProto", server: "91.107.172.155", port: 443},
+                {type: "MTProto", server: "178.20.43.19", port: 443},
+                {type: "MTProto", server: "8443.link-a4.ir", port: 443},
+                {type: "MTProto", server: "telegram.innocom.co", port: 443}
+            ];
 
-            let message = "✅ Свежие прокси (обновлено " + new Date().toLocaleDateString('ru-RU') + ")\n\n";
-            data.forEach((p, i) => {
+            let message = "✅ Свежие прокси (23.03.2026)\n\n";
+            proxies.forEach((p, i) => {
                 const link = `t.me/proxy?server=${p.server}&port=${p.port}`;
                 message += `${i+1}. ${p.type} (${p.server}:${p.port})\nкопировать → ${link}\n\n`;
             });
