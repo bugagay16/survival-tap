@@ -24,6 +24,8 @@
             transition:transform 0.08s; position:relative; overflow:hidden; 
         }
         #tapArea:active { transform:scale(0.72) rotate(-5deg); }
+        .ripple { position:absolute; width:60px; height:60px; background:rgba(255,255,255,0.4); border-radius:50%; transform:translate(-50%,-50%); animation:rippleAnim 0.6s forwards; pointer-events:none; }
+        @keyframes rippleAnim { to { transform:translate(-50%,-50%) scale(3); opacity:0; } }
         .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 8px #ffd700,0 0 20px #ffd700,0 0 35px #ffaa00; pointer-events:none; animation:floatUp 1.35s forwards; }
         @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6) rotate(-8deg)} 15%{opacity:1;transform:translateY(0) scale(1.35) rotate(3deg)} 40%{transform:translateY(-40px) scale(1.1) rotate(-2deg)} 100%{opacity:0;transform:translateY(-170px) scale(0.85) rotate(6deg)} }
         .content { display:none; padding:0 15px; }
@@ -41,7 +43,6 @@
             <h1>🐻 Выживальщик Tap</h1>
         </div>
 
-        <!-- ТАБ-БАР + ПАССИВНЫЙ ДОХОД В КОНЦЕ -->
         <div class="tab-bar">
             <button class="tab active" onclick="switchTab(0)">🛡️ Спасение</button>
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
