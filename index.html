@@ -52,6 +52,14 @@
 
         <div id="tapArea">🐻</div>
 
+        <!-- ВКЛАДКА ДРУЗЬЯ (кнопка только здесь) -->
+        <div id="tab2" class="content">
+            <div class="section-title">👥 Приглашённые друзья</div>
+            <button onclick="showFriendsDetails()" class="big-btn" style="background:#00ccff;color:#000;font-size:22px;padding:25px;">Приглашено: <span id="friendsBig">0</span></button>
+            <button onclick="referral()" class="big-btn referral-btn">Пригласить друга</button>
+        </div>
+
+        <!-- Остальные вкладки -->
         <div id="tab0" class="content active">
             <div class="section-title">🛡️ Спасение ТГ</div>
             <button onclick="showTabContent(1)" class="big-btn save-btn">Прокси</button>
@@ -64,14 +72,8 @@
             <button onclick="showStreakDetails()" class="big-btn" style="background:#ff4444;color:#fff;font-size:24px;padding:30px;">Стрик: <span id="streakBig">1</span> дней 🔥</button>
         </div>
 
-        <div id="tab2" class="content">
-            <div class="section-title">👥 Приглашённые друзья</div>
-            <button onclick="showFriendsDetails()" class="big-btn" style="background:#00ccff;color:#000;font-size:22px;padding:25px;">Приглашено: <span id="friendsBig">0</span></button>
-        </div>
-
         <div id="tab3" class="content">
             <div class="section-title">🚀 Буст</div>
-            <button onclick="referral()" class="big-btn referral-btn">Пригласить друга (+400)</button>
             <button onclick="upgradeTap()" id="upgradeTapBtn" class="big-btn upgrade-btn">Буст тапа (+1) — 100</button>
             <button onclick="upgradeFarm()" id="upgradeFarmBtn" class="big-btn upgrade-btn">Буст дохода (+0.1/сек) — 150</button>
         </div>
@@ -134,44 +136,27 @@
             document.getElementById('tab'+n).classList.add('active');
         }
 
-        // === ПРОКСИ ЗАХАРДКОЖЕНЫ (без Supabase) ===
-        async function showTabContent(n) {
-            if (n !== 1) {
-                const names = ["", "Алёрты", "Бэкап"];
-                const costs = [0,800,1200];
-                if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
-                if (!confirm(`Потратить ${costs[n-1]} на ${names[n-1]}?`)) return;
-                points -= costs[n-1];
-                updateUI();
-                alert(`✅ ${names[n-1]} активирован!`);
-                return;
-            }
-
-            const proxies = [
-                {type: "MTProto", server: "195.2.78.126", port: 443},
-                {type: "MTProto", server: "91.107.172.155", port: 443},
-                {type: "MTProto", server: "178.20.43.19", port: 443},
-                {type: "MTProto", server: "8443.link-a4.ir", port: 443},
-                {type: "MTProto", server: "telegram.innocom.co", port: 443}
-            ];
-
-            let message = "✅ Свежие прокси (23.03.2026)\n\n";
-            proxies.forEach((p, i) => {
-                const link = `t.me/proxy?server=${p.server}&port=${p.port}`;
-                message += `${i+1}. ${p.type} (${p.server}:${p.port})\nкопировать → ${link}\n\n`;
-            });
-
-            alert(message + "\nНажми на строку и копируй в настройки ТГ!");
+        function showTabContent(n) {
+            const names = ["Прокси", "Алёрты", "Бэкап"];
+            const costs = [500,800,1200];
+            if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
+            if (!confirm(`Потратить ${costs[n-1]}?`)) return;
+            points -= costs[n-1];
+            updateUI();
+            alert(`✅ ${names[n-1]} активирован!`);
         }
 
         function showStreakDetails() { alert(`🔥 Стрик: ${streak} дней`); }
         function showFriendsDetails() { alert(`👥 Друзей: ${friends}`); }
 
         function referral() {
+            const reward = 400 + (friends * 300);   // прогрессивный бонус
             const refLink = `https://t.me/SurvivalTapBot?start=ref_test`;
             navigator.clipboard.writeText(refLink).then(() => {
-                friends++; points += 400; updateUI();
-                alert(`🎉 +400 (друзей: ${friends})`);
+                points += reward;
+                friends++;
+                updateUI();
+                alert(`🎉 +${reward} очков (друзей стало: ${friends})`);
             });
         }
 
