@@ -13,6 +13,7 @@
         .tab-bar { display:flex; background:#111; padding:8px 10px; gap:6px; overflow-x:auto; }
         .tab { flex:1; min-width:80px; padding:14px 6px; background:#222; border-radius:12px; font-size:14px; font-weight:bold; color:#ccc; transition:0.3s; }
         .tab.active { background:#aaaaaa; color:#000; }
+        .info-tab { background:#333; color:#aaa; cursor:default; }
         #mainScreen { padding:10px 15px; }
         #survivalPoints { font-size:54px; font-weight:bold; color:#ffd700; margin:5px 0 4px; text-shadow:0 0 25px #ffd700; }
         #tapArea { 
@@ -45,6 +46,7 @@
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
             <button class="tab" onclick="switchTab(2)">👥 Друзья</button>
             <button class="tab" onclick="switchTab(3)">🚀 Буст</button>
+            <button id="passiveBtn" class="tab info-tab">⚡ +0.1/сек (+360/час)</button>
         </div>
 
         <div id="survivalPoints">0</div>
@@ -72,7 +74,7 @@
             <div class="section-title">🚀 Буст</div>
             <button onclick="referral()" class="big-btn referral-btn">Пригласить друга (+400)</button>
             <button onclick="upgradeTap()" id="upgradeTapBtn" class="big-btn upgrade-btn">Буст тапа (+1) — 100</button>
-            <button onclick="upgradeFarm()" id="upgradeFarmBtn" class="big-btn upgrade-btn">Буст дохода (+0.5/сек) — 150</button>
+            <button onclick="upgradeFarm()" id="upgradeFarmBtn" class="big-btn upgrade-btn">Буст дохода (+0.1/сек) — 150</button>
         </div>
     </div>
 
@@ -81,7 +83,7 @@
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
         let coinsPerTap = 1;
-        let coinsPerSecond = 0.5;
+        let coinsPerSecond = 0.1;  // базовый доход снижен до 0.1/сек
         let tapUpgradeCost = 100;
         let farmUpgradeCost = 150;
         const tg = window.Telegram.WebApp || { ready:()=>{}, expand:()=>{}, HapticFeedback: {impactOccurred:()=>{}} };
@@ -92,10 +94,12 @@
 
         function updateUI() {
             document.getElementById('survivalPoints').textContent = Math.floor(points);
+            const perHour = (coinsPerSecond * 3600).toFixed(0);
+            document.getElementById('passiveBtn').innerHTML = `⚡ +${coinsPerSecond.toFixed(1)}/сек (+${perHour}/час)`;
             document.getElementById('streakBig').textContent = streak;
             document.getElementById('friendsBig').textContent = friends;
             document.getElementById('upgradeTapBtn').textContent = `Буст тапа (+1) — ${tapUpgradeCost}`;
-            document.getElementById('upgradeFarmBtn').textContent = `Буст дохода (+0.5/сек) — ${farmUpgradeCost}`;
+            document.getElementById('upgradeFarmBtn').textContent = `Буст дохода (+0.1/сек) — ${farmUpgradeCost}`;
             localStorage.setItem('survivalPoints', points);
         }
 
@@ -162,7 +166,7 @@
         function upgradeFarm() {
             if (points < farmUpgradeCost) return alert('Мало очков!');
             if (!confirm(`Улучшить за ${farmUpgradeCost}?`)) return;
-            points -= farmUpgradeCost; coinsPerSecond += 0.5; farmUpgradeCost = Math.floor(farmUpgradeCost * 1.5);
+            points -= farmUpgradeCost; coinsPerSecond += 0.1; farmUpgradeCost = Math.floor(farmUpgradeCost * 1.5);
             updateUI();
         }
 
