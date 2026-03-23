@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Выживальщик Tap</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { margin:0; padding:0; background:#0a0a0a; color:#fff; font-family:Arial; text-align:center; overflow:hidden; }
         #app { max-width:500px; margin:0 auto; }
@@ -78,6 +79,11 @@
     </div>
 
     <script>
+        // === SUPABASE (только один раз, без дублей) ===
+        const supabaseUrl = 'https://vdkauiyeunpfiljzifiz.supabase.co';
+        const supabaseKey = 'sb_publishable_ZtBu_dIdYcwxBoLkY4txKw_iscTcIzq';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
         let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
@@ -134,14 +140,37 @@
             document.getElementById('tab'+n).classList.add('active');
         }
 
-        function showTabContent(n) {
-            const names = ["Прокси", "Алёрты", "Бэкап"];
-            const costs = [500,800,1200];
-            if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
-            if (!confirm(`Потратить ${costs[n-1]}?`)) return;
-            points -= costs[n-1];
-            updateUI();
-            alert(`✅ ${names[n-1]} активирован!`);
+        // === РЕАЛЬНЫЙ ПРОКСИ ИЗ SUPABASE ===
+        async function showTabContent(n) {
+            if (n !== 1) {
+                const names = ["", "Алёрты", "Бэкап"];
+                const costs = [0,800,1200];
+                if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
+                if (!confirm(`Потратить ${costs[n-1]} на ${names[n-1]}?`)) return;
+                points -= costs[n-1];
+                updateUI();
+                alert(`✅ ${names[n-1]} активирован!`);
+                return;
+            }
+
+            const { data, error } = await supabase.from('proxies').select('*').eq('is_active', true).order('added_at', { ascending: false });
+            if (error) {
+                console.error('Ошибка Supabase:', error);
+                alert("Ошибка загрузки прокси. Попробуй позже!");
+                return;
+            }
+            if (!data || data.length === 0) {
+                alert("Пока нет рабочих прокси. Тапай дальше или жди обновления!");
+                return;
+            }
+
+            let message = "✅ Свежие прокси (обновлено " + new Date().toLocaleDateString('ru-RU') + ")\n\n";
+            data.forEach((p, i) => {
+                const link = `t.me/proxy?server=${p.server}&port=${p.port}`;
+                message += `${i+1}. ${p.type} (${p.server}:${p.port})\nкопировать → ${link}\n\n`;
+            });
+
+            alert(message + "\nНажми на строку и копируй в настройки ТГ!");
         }
 
         function showStreakDetails() { alert(`🔥 Стрик: ${streak} дней`); }
