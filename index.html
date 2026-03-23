@@ -13,6 +13,7 @@
         .tab-bar { display:flex; background:#111; padding:8px 10px; gap:6px; overflow-x:auto; }
         .tab { flex:1; min-width:80px; padding:14px 6px; background:#222; border-radius:12px; font-size:14px; font-weight:bold; color:#ccc; transition:0.3s; }
         .tab.active { background:#aaaaaa; color:#000; }
+        .info-tab { background:#333; color:#aaa; cursor:default; }
         #survivalPoints { font-size:54px; font-weight:bold; color:#ffd700; margin:5px 0 4px; text-shadow:0 0 25px #ffd700; }
         #tapArea { 
             width:290px; height:290px; margin:10px auto 25px; 
@@ -44,6 +45,7 @@
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
             <button class="tab" onclick="switchTab(2)">👥 Друзья</button>
             <button class="tab" onclick="switchTab(3)">🚀 Буст</button>
+            <button id="passiveBtn" class="tab info-tab">⚡ +0.1/сек (+360/час)</button>
         </div>
 
         <div id="survivalPoints">0</div>
@@ -91,6 +93,8 @@
 
         function updateUI() {
             document.getElementById('survivalPoints').textContent = Math.floor(points);
+            const perHour = (coinsPerSecond * 3600).toFixed(0);
+            document.getElementById('passiveBtn').innerHTML = `⚡ +${coinsPerSecond.toFixed(1)}/сек (+${perHour}/час)`;
             document.getElementById('streakBig').textContent = streak;
             document.getElementById('friendsBig').textContent = friends;
             document.getElementById('upgradeTapBtn').textContent = `Буст тапа (+1) — ${tapUpgradeCost}`;
