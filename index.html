@@ -13,9 +13,16 @@
         .tab-bar { display:flex; background:#111; padding:8px 10px; gap:6px; overflow-x:auto; }
         .tab { flex:1; min-width:80px; padding:14px 6px; background:#222; border-radius:12px; font-size:14px; font-weight:bold; color:#ccc; transition:0.3s; }
         .tab.active { background:#aaaaaa; color:#000; }
+        .info-tab { background:#333; color:#aaa; cursor:default; }
         #mainScreen { padding:10px 15px; }
         #survivalPoints { font-size:54px; font-weight:bold; color:#ffd700; margin:5px 0 4px; text-shadow:0 0 25px #ffd700; }
-        #tapArea { width:290px; height:290px; margin:10px auto 25px; background: linear-gradient(to bottom, #ffffff 0% 33.3%, #0039a6 33.3% 66.6%, #da291c 66.6% 100%); border-radius:50%; font-size:125px; line-height:290px; cursor:pointer; box-shadow:0 0 0 4px #000, 0 0 70px #da291c; transition:transform 0.08s; position:relative; overflow:hidden; }
+        #tapArea { 
+            width:290px; height:290px; margin:10px auto 25px; 
+            background: linear-gradient(to bottom, #ffffff 0% 33.3%, #0039a6 33.3% 66.6%, #da291c 66.6% 100%);
+            border-radius:50%; font-size:125px; line-height:290px; cursor:pointer; 
+            box-shadow:0 0 0 4px #000, 0 0 70px #da291c; 
+            transition:transform 0.08s; position:relative; overflow:hidden; 
+        }
         #tapArea:active { transform:scale(0.72) rotate(-5deg); }
         .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 8px #ffd700,0 0 20px #ffd700,0 0 35px #ffaa00; pointer-events:none; animation:floatUp 1.35s forwards; }
         @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6) rotate(-8deg)} 15%{opacity:1;transform:translateY(0) scale(1.35) rotate(3deg)} 40%{transform:translateY(-40px) scale(1.1) rotate(-2deg)} 100%{opacity:0;transform:translateY(-170px) scale(0.85) rotate(6deg)} }
@@ -34,11 +41,13 @@
             <h1>🐻 Выживальщик Tap</h1>
         </div>
 
+        <!-- ТАБ-БАР + ПАССИВНЫЙ ДОХОД В КОНЦЕ -->
         <div class="tab-bar">
             <button class="tab active" onclick="switchTab(0)">🛡️ Спасение</button>
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
             <button class="tab" onclick="switchTab(2)">👥 Друзья</button>
             <button class="tab" onclick="switchTab(3)">🚀 Буст</button>
+            <button id="passiveBtn" class="tab info-tab">⚡ +0.5/сек (+1800/час)</button>
         </div>
 
         <div id="survivalPoints">0</div>
@@ -87,6 +96,8 @@
 
         function updateUI() {
             document.getElementById('survivalPoints').textContent = Math.floor(points);
+            const perHour = (coinsPerSecond * 3600).toFixed(0);
+            document.getElementById('passiveBtn').innerHTML = `⚡ +${coinsPerSecond.toFixed(1)}/сек (+${perHour}/час)`;
             document.getElementById('streakBig').textContent = streak;
             document.getElementById('friendsBig').textContent = friends;
             document.getElementById('upgradeTapBtn').textContent = `Буст тапа (+1) — ${tapUpgradeCost}`;
