@@ -80,10 +80,7 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://vdkauiyeunpfiljzifiz.supabase.co';
-        const supabaseKey = 'sb_publishable_ZtBu_dIdYcwxBoLkY4txKw_iscTcIzq';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
+        
         let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
