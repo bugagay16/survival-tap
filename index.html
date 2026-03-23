@@ -28,6 +28,9 @@
         @keyframes rippleAnim { to { transform:translate(-50%,-50%) scale(3); opacity:0; } }
         .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 8px #ffd700,0 0 20px #ffd700,0 0 35px #ffaa00; pointer-events:none; animation:floatUp 1.35s forwards; }
         @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6) rotate(-8deg)} 15%{opacity:1;transform:translateY(0) scale(1.35) rotate(3deg)} 40%{transform:translateY(-40px) scale(1.1) rotate(-2deg)} 100%{opacity:0;transform:translateY(-170px) scale(0.85) rotate(6deg)} }
+        .content { display:none; padding:0 15px; }
+        .content.active { display:block; }
+        .section-title { font-size:18px; color:#00ffaa; margin:15px 0 12px; text-align:left; }
         .big-btn { width:100%; padding:18px; margin:8px 0; border-radius:14px; font-size:17px; font-weight:bold; border:none; }
         .referral-btn { background:#00ccff; color:#000; }
         .upgrade-btn { background:#00ffaa; color:#000; }
@@ -40,6 +43,7 @@
             <h1>🐻 Выживальщик Tap</h1>
         </div>
 
+        <!-- ТАБ-БАР (5 кнопок) -->
         <div class="tab-bar">
             <button class="tab active" onclick="switchTab(0)">🛡️ Спасение</button>
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
@@ -50,62 +54,7 @@
 
         <div id="survivalPoints">0</div>
 
-       <div id="tapArea">🐻</div>
-
-<script>
-    const tapArea = document.getElementById('tapArea');
-    let points = 0;
-
-    function tap(e) {
-        e.preventDefault();
-        const touches = e.touches || [e];
-        const rect = tapArea.getBoundingClientRect();
-
-        touches.forEach(touch => {
-            points += 1;
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-
-            const text = document.createElement('div');
-            text.className = 'floating';
-            text.textContent = `+1`;
-            text.style.left = (rect.left + x - 15) + 'px';
-            text.style.top = (rect.top + y - 30) + 'px';
-            document.body.appendChild(text);
-            setTimeout(() => text.remove(), 1400);
-        });
-
-        // Вибрация (работает только в Telegram)
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-            window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
-        }
-
-        document.getElementById('survivalPoints').textContent = points;
-    }
-
-    tapArea.addEventListener('click', tap);
-    tapArea.addEventListener('touchstart', tap);
-
-    // Анимация ripple (если хочешь)
-    tapArea.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        const ripple = document.createElement('div');
-        ripple.className = 'ripple';
-        ripple.style.left = (touch.clientX - rect.left) + 'px';
-        ripple.style.top = (touch.clientY - rect.top) + 'px';
-        tapArea.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 600);
-    });
-</script>
-
-<style>
-    #tapArea { width:290px; height:290px; margin:20px auto; background:#00aaff; border-radius:50%; font-size:125px; line-height:290px; cursor:pointer; box-shadow:0 0 60px #00aaff; position:relative; overflow:hidden; }
-    #tapArea:active { transform:scale(0.75); }
-    .ripple { position:absolute; width:60px; height:60px; background:rgba(255,255,255,0.4); border-radius:50%; transform:translate(-50%,-50%); animation:rippleAnim 0.6s forwards; pointer-events:none; }
-    @keyframes rippleAnim { to { transform:translate(-50%,-50%) scale(3); opacity:0; } }
-    .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 15px #ffd700; pointer-events:none; animation:floatUp 1.3s forwards; }
-    @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6)} 15%{opacity:1;transform:translateY(0) scale(1.35)} 100%{opacity:0;transform:translateY(-160px) scale(0.8)} }
-</style>
+        <div id="tapArea">🐻</div>
 
         <!-- ВКЛАДКИ -->
         <div id="tab0" class="content active">
@@ -134,9 +83,6 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp || { ready:()=>{}, expand:()=>{}, HapticFeedback: {impactOccurred:()=>{}} };
-        tg.ready(); tg.expand();
-
         let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
@@ -146,6 +92,9 @@
         let tapUpgradeCost = 100;
         let farmUpgradeCost = 150;
         const today = new Date().toDateString();
+        const tg = window.Telegram.WebApp || { ready:()=>{}, expand:()=>{}, HapticFeedback: {impactOccurred:()=>{}} };
+
+        tg.ready(); tg.expand();
 
         if (lastLogin !== today) {
             let multiplier = streak >= 5 ? 4 : streak >= 4 ? 3 : streak >= 3 ? 2.25 : streak >= 2 ? 1.5 : 1;
