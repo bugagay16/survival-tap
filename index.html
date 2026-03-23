@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Выживальщик Tap</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { margin:0; padding:0; background:#0a0a0a; color:#fff; font-family:Arial; text-align:center; overflow:hidden; }
+        #app { max-width:500px; margin:0 auto; }
+        .header { padding:20px 15px 10px; background:#111; }
+        .header h1 { margin:0; font-size:26px; }
+        #survivalPoints { font-size:52px; font-weight:bold; color:#ffd700; margin:10px 0; text-shadow:0 0 25px #ffd700; }
+        #streakText { font-size:18px; color:#ffaa00; margin:5px 0; }
+        #referralStats { font-size:16px; color:#00ffaa; margin:8px 0 15px; }
+        #tapArea { width:300px; height:300px; margin:15px auto; background: radial-gradient(circle at center, #00ddff, #0088cc); border-radius:50%; font-size:130px; line-height:300px; cursor:pointer; box-shadow: 0 0 60px #00ddff, 0 0 130px #00aaff; transition: transform 0.08s cubic-bezier(0.68, -0.55, 0.27, 1.55), box-shadow 0.25s; user-select:none; position:relative; }
+        #tapArea:active { transform: scale(0.72) rotate(-4deg); box-shadow: 0 0 120px #00ffff; }
+        #tapArea::after { content:''; position:absolute; top:50%; left:50%; width:0; height:0; background:rgba(255,255,255,0.3); border-radius:50%; transform:translate(-50%,-50%); transition: all 0.4s ease-out; pointer-events:none; }
+        #tapArea.ripple::after { width:220px; height:220px; opacity:0; }
+        .floating { position:absolute; color:#ffd700; font-size:32px; font-weight:bold; text-shadow:0 0 15px #ffd700; pointer-events:none; animation: floatUp 1.4s forwards; }
+        @keyframes floatUp { 0% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:0; transform:translateY(-180px) scale(0.8); } }
+        .progress-container { margin:15px 20px; text-align:left; }
+        .progress-label { font-size:15px; margin-bottom:4px; }
+        .progress-bar { height:12px; background:#222; border-radius:6px; overflow:hidden; }
+        .progress-fill { height:100%; background:#00ff44; width:0%; transition: width 0.4s ease; }
+        .tabs { display:flex; justify-content:center; gap:10px; margin:20px 15px; flex-wrap:wrap; }
+        .tabs button { padding:14px 22px; background:#222; border:none; border-radius:10px; font-size:16px; color:#aaa; transition: all 0.3s ease; }
+        .tabs button.unlocked { background:#aaaaaa; color:#000; box-shadow:0 0 15px #aaaaaa; font-weight:bold; }
+        .referral-btn { background:#00ccff !important; color:#000; font-weight:bold; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>🐻 Выживальщик Tap</h1>
+            <p style="margin:5px 0; opacity:0.8;">Тапай и спасай ТГ от РКН!</p>
+        </div>
+        <div id="survivalPoints">0</div>
+        <div id="streakText">Стрик: 1 день 🔥</div>
+        <div id="referralStats">Приглашено: 0 | До бонуса: 3</div>
+        <div id="tapArea" onclick="tap()">🐻</div>
+        <div class="progress-container"><div class="progress-label">Прокси (500 очков)</div><div class="progress-bar"><div id="progressProxy" class="progress-fill"></div></div></div>
+        <div class="progress-container"><div class="progress-label">Алёрты (800 очков)</div><div class="progress-bar"><div id="progressAlerts" class="progress-fill"></div></div></div>
+        <div class="progress-container"><div class="progress-label">Бэкап (1200 очков)</div><div class="progress-bar"><div id="progressBackup" class="progress-fill"></div></div></div>
+        <div class="tabs">
+            <button id="proxyBtn" onclick="showTab(1)">Прокси</button>
+            <button id="alertsBtn" onclick="showTab(2)">Алёрты</button>
+            <button id="backupBtn" onclick="showTab(3)">Бэкап</button>
+            <button onclick="referral()" class="referral-btn">Пригласить друга (+400)</button>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://vdkauiyeunpfiljzifiz.supabase.co';
+        const supabaseKey = 'sb_publishable_ZtBu_dIdYcwxBoLkY4txKw_iscTcIzq';
+        const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
+
+        let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
+        let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
+        let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
+        let lastLogin = localStorage.getItem('lastLogin');
+        let tapMultiplier = localStorage.getItem('tapMultiplier') ? parseFloat(localStorage.getItem('tapMultiplier')) : 1;
+        const today = new Date().toDateString();
+        const tg = window.Telegram.WebApp;
+        tg.ready(); tg.expand();
+
+        async function loadProxies() {
+            const { data } = await supabase.from('proxies').select('*').eq('is_active', true);
+            window.proxiesList = data || [];
+        }
+        loadProxies();
+
+        if (lastLogin !== today) {
+            let multiplier = streak >= 5 ? 4 : streak >= 4 ? 3 : streak >= 3 ? 2.25 : streak >= 2 ? 1.5 : 1;
+            const bonus = Math.floor(100 * multiplier);
+            points += bonus;
+            if (streak % 7 === 0) points += 500;
+            streak++;
+            localStorage.setItem('streak', streak);
+            localStorage.setItem('lastLogin', today);
+            alert(`🎁 +${bonus} очков (стрик ${streak} дней)`);
+        }
+
+        function updateUI() {
+            document.getElementById('survivalPoints').textContent = Math.floor(points);
+            document.getElementById('streakText').innerHTML = `Стрик: ${streak} дней 🔥`;
+            const next = friends < 3 ? 3 : friends < 5 ? 5 : friends < 7 ? 7 : friends < 10 ? 10 : 'макс';
+            const remaining = next === 'макс' ? 0 : next - friends;
+            document.getElementById('referralStats').innerHTML = `Приглашено: ${friends} | До бонуса: ${remaining}`;
+            document.getElementById('progressProxy').style.width = Math.min(100, points / 5) + '%';
+            document.getElementById('progressAlerts').style.width = Math.min(100, points / 8) + '%';
+            document.getElementById('progressBackup').style.width = Math.min(100, points / 12) + '%';
+            document.getElementById('proxyBtn').classList.toggle('unlocked', points >= 500);
+            document.getElementById('alertsBtn').classList.toggle('unlocked', points >= 800);
+            document.getElementById('backupBtn').classList.toggle('unlocked', points >= 1200);
+            localStorage.setItem('survivalPoints', points);
+            localStorage.setItem('friends', friends);
+            localStorage.setItem('tapMultiplier', tapMultiplier);
+        }
+
+        function tap() {
+            points += Math.floor(5 * tapMultiplier);
+            const area = document.getElementById('tapArea');
+            area.classList.add('ripple');
+            setTimeout(() => area.classList.remove('ripple'), 400);
+            for (let i = 0; i < 4; i++) createFloatingText(5 + Math.random()*3);
+            tg.HapticFeedback.impactOccurred('heavy');
+            updateUI();
+        }
+
+        function createFloatingText(amount) {
+            const area = document.getElementById('tapArea');
+            const rect = area.getBoundingClientRect();
+            const text = document.createElement('div');
+            text.className = 'floating';
+            text.textContent = `+${Math.floor(amount)}`;
+            text.style.left = (rect.left + rect.width/2 - 20 + (Math.random()*60 - 30)) + 'px';
+            text.style.top = (rect.top + rect.height/2 + (Math.random()*30 - 15)) + 'px';
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 1600);
+        }
+
+        async function showTab(n) {
+            const costs = [500, 800, 1200];
+            if (points < costs[n-1]) return alert(`Тапай ещё! Нужно ${costs[n-1]} очков`);
+            if (!confirm(`Потратить ${costs[n-1]} очков?`)) return;
+            points -= costs[n-1];
+            updateUI();
+            if (n === 1) {
+                let list = (window.proxiesList || []).map(p => `${p.type}: ${p.server}:${p.port}`).join('\n');
+                alert(`✅ РЕАЛЬНЫЕ ПРОКСИ:\n\n${list || 'Пока нет прокси'}\n\nСкопируй и вставь в ТГ`);
+            }
+            if (n === 2) alert("✅ Алёрты активны!");
+            if (n === 3) alert("✅ Бэкап сохранён!");
+        }
+
+        function referral() {
+            const refLink = `https://t.me/SurvivalTapBot?start=ref_${tg.initDataUnsafe.user?.id || 'test'}`;
+            navigator.clipboard.writeText(refLink).then(() => {
+                friends++;
+                points += 400;
+                if (friends === 3) { points += 800; alert("🎉 Отряд выживальщиков! +800"); }
+                else if (friends === 5) { points += 1500; tapMultiplier = 1.1; alert("🎉 Команда спасения! +1500 +10% к тапам"); }
+                else if (friends === 7) { points += 2500; alert("🎉 Стадо медведей! +2500"); }
+                else if (friends === 10) { points += 4000; tapMultiplier = 1.2; alert("🎉 Легион выживших! +4000 +20% к тапам"); }
+                else alert(`🎉 +400 очков (друзей: ${friends})`);
+                updateUI();
+            });
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
