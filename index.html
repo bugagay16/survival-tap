@@ -11,11 +11,11 @@
         .header { padding:12px; background:#111; }
         .header h1 { margin:0; font-size:23px; }
         .tab-bar { display:flex; background:#111; padding:8px 10px; gap:6px; overflow-x:auto; }
-        .tab { flex:1; min-width:80px; padding:14px 6px; background:#222; border-radius:12px; font-size:14px; font-weight:bold; color:#ccc; }
+        .tab { flex:1; min-width:80px; padding:14px 6px; background:#222; border-radius:12px; font-size:14px; font-weight:bold; color:#ccc; transition:0.3s; }
         .tab.active { background:#aaaaaa; color:#000; }
+        .info-tab { background:#333; color:#aaa; cursor:default; }
         #mainScreen { padding:10px 15px; }
         #survivalPoints { font-size:54px; font-weight:bold; color:#ffd700; margin:5px 0 4px; text-shadow:0 0 25px #ffd700; }
-        #passiveIncome { font-size:18px; color:#00ffaa; margin-bottom:15px; }
         #tapArea { 
             width:290px; height:290px; margin:10px auto 25px; 
             background: linear-gradient(to bottom, #ffffff 0% 33.3%, #0039a6 33.3% 66.6%, #da291c 66.6% 100%);
@@ -26,27 +26,12 @@
         #tapArea:active { transform:scale(0.72) rotate(-5deg); }
         .ripple { position:absolute; width:60px; height:60px; background:rgba(255,255,255,0.4); border-radius:50%; transform:translate(-50%,-50%); animation:rippleAnim 0.6s forwards; pointer-events:none; }
         @keyframes rippleAnim { to { transform:translate(-50%,-50%) scale(3); opacity:0; } }
-        
-        /* УЛУЧШЕННЫЙ ВИЗУАЛ ЦИФР */
-        .floating { 
-            position:absolute; 
-            color:#ffd700; 
-            font-size:38px; 
-            font-weight:900; 
-            text-shadow: 
-                0 0 8px #ffd700,
-                0 0 20px #ffd700,
-                0 0 35px #ffaa00;
-            pointer-events:none; 
-            animation:floatUp 1.35s forwards; 
-            transform-origin:center;
-        }
-        @keyframes floatUp { 
-            0%   { opacity:0; transform:translateY(20px) scale(0.6) rotate(-8deg); }
-            15%  { opacity:1; transform:translateY(0) scale(1.35) rotate(3deg); }
-            40%  { transform:translateY(-40px) scale(1.1) rotate(-2deg); }
-            100% { opacity:0; transform:translateY(-170px) scale(0.85) rotate(6deg); }
-        }
+        .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 8px #ffd700,0 0 20px #ffd700,0 0 35px #ffaa00; pointer-events:none; animation:floatUp 1.35s forwards; }
+        @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6) rotate(-8deg)} 15%{opacity:1;transform:translateY(0) scale(1.35) rotate(3deg)} 40%{transform:translateY(-40px) scale(1.1) rotate(-2deg)} 100%{opacity:0;transform:translateY(-170px) scale(0.85) rotate(6deg)} }
+        .big-btn { width:100%; padding:18px; margin:8px 0; border-radius:14px; font-size:17px; font-weight:bold; border:none; }
+        .referral-btn { background:#00ccff; color:#000; }
+        .upgrade-btn { background:#00ffaa; color:#000; }
+        .save-btn { background:#aaaaaa; color:#000; font-weight:bold; }
     </style>
 </head>
 <body>
@@ -59,53 +44,89 @@
             <button class="tab active" onclick="switchTab(0)">🛡️ Спасение</button>
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
             <button class="tab" onclick="switchTab(2)">👥 Друзья</button>
-            <button class="tab" onclick="switchTab(3)">🚀 Прокачка</button>
+            <button class="tab" onclick="switchTab(3)">🚀 Буст</button>
+            <button id="passiveBtn" class="tab info-tab">⚡ +0.5/сек (+1800/час)</button>
         </div>
 
         <div id="survivalPoints">0</div>
-        <div id="passiveIncome">+0.5/сек</div>
 
         <div id="tapArea">🐻</div>
 
-        <!-- ВКЛАДКИ (как раньше) -->
-        <div id="tab0" class="content active">...</div>
-        <!-- остальные вкладки без изменений -->
+        <!-- ВКЛАДКИ -->
+        <div id="tab0" class="content active">
+            <div class="section-title">🛡️ Спасение ТГ</div>
+            <button onclick="showTabContent(1)" class="big-btn save-btn">Прокси</button>
+            <button onclick="showTabContent(2)" class="big-btn save-btn">Алёрты</button>
+            <button onclick="showTabContent(3)" class="big-btn save-btn">Бэкап чатов</button>
+        </div>
+
+        <div id="tab1" class="content">
+            <div class="section-title">🔥 Текущий стрик</div>
+            <button onclick="showStreakDetails()" class="big-btn" style="background:#ff4444;color:#fff;font-size:24px;padding:30px;">Стрик: <span id="streakBig">1</span> дней 🔥</button>
+        </div>
+
+        <div id="tab2" class="content">
+            <div class="section-title">👥 Приглашённые друзья</div>
+            <button onclick="showFriendsDetails()" class="big-btn" style="background:#00ccff;color:#000;font-size:22px;padding:25px;">Приглашено: <span id="friendsBig">0</span></button>
+        </div>
+
+        <div id="tab3" class="content">
+            <div class="section-title">🚀 Буст</div>
+            <button onclick="referral()" class="big-btn referral-btn">Пригласить друга (+400)</button>
+            <button onclick="upgradeTap()" id="upgradeTapBtn" class="big-btn upgrade-btn">Буст тапа (+1) — 100</button>
+            <button onclick="upgradeFarm()" id="upgradeFarmBtn" class="big-btn upgrade-btn">Буст дохода (+0.5/сек) — 150</button>
+        </div>
     </div>
 
     <script>
-        // (весь твой предыдущий JS без изменений, только createFloatingText улучшен)
+        const tg = window.Telegram.WebApp || { ready:()=>{}, expand:()=>{}, HapticFeedback: {impactOccurred:()=>{}} };
+        tg.ready(); tg.expand();
+
         let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
+        let lastLogin = localStorage.getItem('lastLogin');
         let coinsPerTap = 1;
         let coinsPerSecond = 0.5;
         let tapUpgradeCost = 100;
         let farmUpgradeCost = 150;
-        const tg = window.Telegram.WebApp || { ready:()=>{}, expand:()=>{}, HapticFeedback: {impactOccurred:()=>{}} };
+        const today = new Date().toDateString();
 
-        tg.ready(); tg.expand();
+        if (lastLogin !== today) {
+            let multiplier = streak >= 5 ? 4 : streak >= 4 ? 3 : streak >= 3 ? 2.25 : streak >= 2 ? 1.5 : 1;
+            const bonus = Math.floor(100 * multiplier);
+            points += bonus;
+            if (streak % 7 === 0) points += 500;
+            streak++;
+            localStorage.setItem('streak', streak);
+            localStorage.setItem('lastLogin', today);
+            alert(`🎁 +${bonus} очков (стрик ${streak} дней)`);
+        }
 
         setInterval(() => { points += coinsPerSecond; updateUI(); }, 1000);
 
         function updateUI() {
             document.getElementById('survivalPoints').textContent = Math.floor(points);
-            document.getElementById('passiveIncome').textContent = `+${coinsPerSecond.toFixed(1)}/сек`;
+            const perHour = (coinsPerSecond * 3600).toFixed(0);
+            document.getElementById('passiveBtn').innerHTML = `⚡ +${coinsPerSecond.toFixed(1)}/сек (+${perHour}/час)`;
+            document.getElementById('streakBig').textContent = streak;
+            document.getElementById('friendsBig').textContent = friends;
+            document.getElementById('upgradeTapBtn').textContent = `Буст тапа (+1) — ${tapUpgradeCost}`;
+            document.getElementById('upgradeFarmBtn').textContent = `Буст дохода (+0.5/сек) — ${farmUpgradeCost}`;
+            localStorage.setItem('survivalPoints', points);
+            localStorage.setItem('friends', friends);
         }
 
         function tap(e) {
-            if (!e) e = { touches: [{ clientX: 0, clientY: 0 }] };
+            if (!e) e = { touches: [{clientX:0, clientY:0}] };
             const touches = e.touches || [e];
             const rect = document.getElementById('tapArea').getBoundingClientRect();
-
             touches.forEach(touch => {
                 points += coinsPerTap;
-
                 const x = touch.clientX - rect.left;
                 const y = touch.clientY - rect.top;
-
                 createFloatingText(coinsPerTap, x, y);
             });
-
             tg.HapticFeedback.impactOccurred('heavy');
             updateUI();
         }
@@ -122,7 +143,46 @@
             setTimeout(() => text.remove(), 1450);
         }
 
-        // Остальные функции (referral, upgradeTap, switchTab и т.д.) — копируй из предыдущего кода
+        function switchTab(n) {
+            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab'+n).classList.add('active');
+        }
+
+        function showTabContent(n) {
+            const names = ["Прокси", "Алёрты", "Бэкап"];
+            const costs = [500,800,1200];
+            if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
+            if (!confirm(`Потратить ${costs[n-1]}?`)) return;
+            points -= costs[n-1];
+            updateUI();
+            alert(`✅ ${names[n-1]} активирован!`);
+        }
+
+        function showStreakDetails() { alert(`🔥 Стрик: ${streak} дней`); }
+        function showFriendsDetails() { alert(`👥 Друзей: ${friends}`); }
+
+        function referral() {
+            const refLink = `https://t.me/SurvivalTapBot?start=ref_test`;
+            navigator.clipboard.writeText(refLink).then(() => {
+                friends++; points += 400; updateUI();
+                alert(`🎉 +400 (друзей: ${friends})`);
+            });
+        }
+
+        function upgradeTap() {
+            if (points < tapUpgradeCost) return alert('Мало очков!');
+            if (!confirm(`Улучшить за ${tapUpgradeCost}?`)) return;
+            points -= tapUpgradeCost; coinsPerTap += 1; tapUpgradeCost = Math.floor(tapUpgradeCost * 1.5);
+            updateUI();
+        }
+
+        function upgradeFarm() {
+            if (points < farmUpgradeCost) return alert('Мало очков!');
+            if (!confirm(`Улучшить за ${farmUpgradeCost}?`)) return;
+            points -= farmUpgradeCost; coinsPerSecond += 0.5; farmUpgradeCost = Math.floor(farmUpgradeCost * 1.5);
+            updateUI();
+        }
 
         const tapArea = document.getElementById('tapArea');
         tapArea.addEventListener('click', tap);
