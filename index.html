@@ -150,13 +150,7 @@ async function showTabContent(n) {
         updateUI();
         alert(`✅ ${names[n-1]} активирован!`);
         return;
-    }
 
-    const { data, error } = await supabase.from('proxies').select('*').eq('is_active', true).order('added_at', { ascending: false });
-    if (error) {
-        console.error('Ошибка supabase:', error);
-        alert("Ошибка загрузки прокси. Попробуй позже!");
-        return;
     }
     if (!data || data.length === 0) {
         alert("Пока нет рабочих прокси. Тапай дальше или жди обновления!");
