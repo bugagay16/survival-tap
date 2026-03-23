@@ -50,7 +50,62 @@
 
         <div id="survivalPoints">0</div>
 
-        <div id="tapArea">🐻</div>
+       <div id="tapArea">🐻</div>
+
+<script>
+    const tapArea = document.getElementById('tapArea');
+    let points = 0;
+
+    function tap(e) {
+        e.preventDefault();
+        const touches = e.touches || [e];
+        const rect = tapArea.getBoundingClientRect();
+
+        touches.forEach(touch => {
+            points += 1;
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            const text = document.createElement('div');
+            text.className = 'floating';
+            text.textContent = `+1`;
+            text.style.left = (rect.left + x - 15) + 'px';
+            text.style.top = (rect.top + y - 30) + 'px';
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 1400);
+        });
+
+        // Вибрация (работает только в Telegram)
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+        }
+
+        document.getElementById('survivalPoints').textContent = points;
+    }
+
+    tapArea.addEventListener('click', tap);
+    tapArea.addEventListener('touchstart', tap);
+
+    // Анимация ripple (если хочешь)
+    tapArea.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        ripple.style.left = (touch.clientX - rect.left) + 'px';
+        ripple.style.top = (touch.clientY - rect.top) + 'px';
+        tapArea.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    });
+</script>
+
+<style>
+    #tapArea { width:290px; height:290px; margin:20px auto; background:#00aaff; border-radius:50%; font-size:125px; line-height:290px; cursor:pointer; box-shadow:0 0 60px #00aaff; position:relative; overflow:hidden; }
+    #tapArea:active { transform:scale(0.75); }
+    .ripple { position:absolute; width:60px; height:60px; background:rgba(255,255,255,0.4); border-radius:50%; transform:translate(-50%,-50%); animation:rippleAnim 0.6s forwards; pointer-events:none; }
+    @keyframes rippleAnim { to { transform:translate(-50%,-50%) scale(3); opacity:0; } }
+    .floating { position:absolute; color:#ffd700; font-size:38px; font-weight:900; text-shadow:0 0 15px #ffd700; pointer-events:none; animation:floatUp 1.3s forwards; }
+    @keyframes floatUp { 0%{opacity:0;transform:translateY(20px) scale(0.6)} 15%{opacity:1;transform:translateY(0) scale(1.35)} 100%{opacity:0;transform:translateY(-160px) scale(0.8)} }
+</style>
 
         <!-- ВКЛАДКИ -->
         <div id="tab0" class="content active">
