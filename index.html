@@ -13,7 +13,6 @@
         .tab-bar { display:flex; background:#111; padding:8px 10px; gap:6px; overflow-x:auto; }
         .tab { flex:1; min-width:80px; padding:14px 6px; background:#222; border-radius:12px; font-size:14px; font-weight:bold; color:#ccc; transition:0.3s; }
         .tab.active { background:#aaaaaa; color:#000; }
-        .info-tab { background:#333; color:#aaa; cursor:default; }
         #mainScreen { padding:10px 15px; }
         #survivalPoints { font-size:54px; font-weight:bold; color:#ffd700; margin:5px 0 4px; text-shadow:0 0 25px #ffd700; }
         #tapArea { 
@@ -46,7 +45,6 @@
             <button class="tab" onclick="switchTab(1)">🔥 Стрик</button>
             <button class="tab" onclick="switchTab(2)">👥 Друзья</button>
             <button class="tab" onclick="switchTab(3)">🚀 Буст</button>
-            <button id="passiveBtn" class="tab info-tab">⚡ +0.1/сек (+360/час)</button>
         </div>
 
         <div id="survivalPoints">0</div>
@@ -79,7 +77,6 @@
     </div>
 
     <script>
-        
         let points = localStorage.getItem('survivalPoints') ? parseInt(localStorage.getItem('survivalPoints')) : 0;
         let streak = localStorage.getItem('streak') ? parseInt(localStorage.getItem('streak')) : 1;
         let friends = localStorage.getItem('friends') ? parseInt(localStorage.getItem('friends')) : 0;
@@ -87,19 +84,26 @@
         let coinsPerSecond = 0.1;
         let tapUpgradeCost = 100;
         let farmUpgradeCost = 150;
+        const today = new Date().toDateString();
         const tg = window.Telegram.WebApp || { ready:()=>{}, expand:()=>{}, HapticFeedback: {impactOccurred:()=>{}} };
-        const supabaseUrl = 'https://vdkauiyeunpfiljzifiz.supabase.co';
-        const supabaseKey = 'sb_publishable_ZtBu_dIdYcwxBoLkY4txKw_iscTcIzq';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         tg.ready(); tg.expand();
+
+        if (lastLogin !== today) {
+            let multiplier = streak >= 5 ? 4 : streak >= 4 ? 3 : streak >= 3 ? 2.25 : streak >= 2 ? 1.5 : 1;
+            const bonus = Math.floor(100 * multiplier);
+            points += bonus;
+            if (streak % 7 === 0) points += 500;
+            streak++;
+            localStorage.setItem('streak', streak);
+            localStorage.setItem('lastLogin', today);
+            alert(`🎁 +${bonus} очков (стрик ${streak} дней)`);
+        }
 
         setInterval(() => { points += coinsPerSecond; updateUI(); }, 1000);
 
         function updateUI() {
             document.getElementById('survivalPoints').textContent = Math.floor(points);
-            const perHour = (coinsPerSecond * 3600).toFixed(0);
-            document.getElementById('passiveBtn').innerHTML = `⚡ +${coinsPerSecond.toFixed(1)}/сек (+${perHour}/час)`;
             document.getElementById('streakBig').textContent = streak;
             document.getElementById('friendsBig').textContent = friends;
             document.getElementById('upgradeTapBtn').textContent = `Буст тапа (+1) — ${tapUpgradeCost}`;
@@ -139,32 +143,15 @@
             document.getElementById('tab'+n).classList.add('active');
         }
 
-
-async function showTabContent(n) {
-    if (n !== 1) {
-        const names = ["", "Алёрты", "Бэкап"];
-        const costs = [0,800,1200];
-        if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
-        if (!confirm(`Потратить ${costs[n-1]} на ${names[n-1]}?`)) return;
-        points -= costs[n-1];
-        updateUI();
-        alert(`✅ ${names[n-1]} активирован!`);
-        return;
-
-    }
-    if (!data || data.length === 0) {
-        alert("Пока нет рабочих прокси. Тапай дальше или жди обновления!");
-        return;
-    }
-
-    let message = "✅ Свежие прокси (обновлено " + new Date().toLocaleDateString('ru-RU') + ")\n\n";
-    data.forEach((p, i) => {
-        const link = `t.me/proxy?server=${p.server}&port=${p.port}`;
-        message += `${i+1}. ${p.type} (${p.server}:${p.port})\nкопировать → ${link}\n\n`;
-    });
-
-    alert(message + "\nНажми на строку и копируй в настройки ТГ!");
-}
+        function showTabContent(n) {
+            const names = ["Прокси", "Алёрты", "Бэкап"];
+            const costs = [500,800,1200];
+            if (points < costs[n-1]) return alert(`Нужно ещё ${costs[n-1]} очков!`);
+            if (!confirm(`Потратить ${costs[n-1]}?`)) return;
+            points -= costs[n-1];
+            updateUI();
+            alert(`✅ ${names[n-1]} активирован!`);
+        }
 
         function showStreakDetails() { alert(`🔥 Стрик: ${streak} дней`); }
         function showFriendsDetails() { alert(`👥 Друзей: ${friends}`); }
